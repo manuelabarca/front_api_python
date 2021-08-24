@@ -1,18 +1,9 @@
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+			api: "https://3000-pink-junglefowl-xsmm1zel.ws-eu16.gitpod.io",
+			isAuthenticate: !!localStorage.getItem("token") ? true : false,
+			posts: []
 		},
 		actions: {
 			// Use getActions to call a function within a fuction
@@ -37,6 +28,51 @@ const getState = ({ getStore, getActions, setStore }) => {
 
 				//reset the global store
 				setStore({ demo: demo });
+			},
+			signIn: (email, password) => {
+				console.log("data post", email, password);
+				const store = getStore();
+				let requestBody = {
+					email: email,
+					password: password
+				};
+				fetch(`${store.api}/login`, {
+					method: "POST",
+					body: JSON.stringify(requestBody),
+					headers: {
+						"Content-type": "application/json"
+					}
+				})
+					.then(resp => {
+						if (resp.ok) {
+							return resp.json();
+						} else {
+							console.log("response error", resp);
+						}
+					})
+					.then(data => {
+						localStorage.setItem("token", data.token);
+						localStorage.setStore({ isAuthenticate: true });
+					})
+					.catch(error => console.error("[ERROR IN SIGN IN]", error));
+			},
+			getPosts: () => {
+				const store = getStore();
+				fetch(`${store.api}/post`, {
+					headers: {
+						"Content-type": "application/json",
+						Authorization: `Bearer ${localStorage.getItem("token")}`
+					}
+				})
+					.then(resp => {
+						if (resp.ok) {
+							return resp.json();
+						} else {
+							console.error("[Error response]", resp);
+						}
+					})
+					.then(data => setStore({ posts: data }))
+					.catch(error => console.error("[ERROR TO GET POSTS]", error));
 			}
 		}
 	};
